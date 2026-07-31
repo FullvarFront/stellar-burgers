@@ -8,26 +8,6 @@ const MAIN_NAME = 'Биокотлета из марсианской Магнол
 
 const ORDER_NUMBER = 55555;
 
-const mockUser = {
-  success: true,
-  user: { email: 'test@stellar.ru', name: 'Космонавт' }
-};
-
-const mockOrder = {
-  success: true,
-  name: 'Космический бургер',
-  order: {
-    _id: '660d4fa197ede0001d06bfff',
-    status: 'done',
-    name: 'Космический бургер',
-    createdAt: '2024-04-03T12:00:00.000Z',
-    updatedAt: '2024-04-03T12:00:01.000Z',
-    number: ORDER_NUMBER,
-    ingredients: [BUN_ID, MAIN_ID, BUN_ID],
-    price: 2934
-  }
-};
-
 // Добавляет ингредиент из каталога в конструктор по его id.
 const addToConstructor = async (page: Page, id: string) => {
   await page
@@ -38,11 +18,9 @@ const addToConstructor = async (page: Page, id: string) => {
 
 test.describe('Конструктор бургера', () => {
   test.beforeEach(async ({ page }) => {
-    // Перехватываем запрос ингредиентов и отдаём моки из HAR-файла.
-    await page.routeFromHAR('./tests/ingredients.har', {
-      url: '**/api/ingredients',
-      update: false
-    });
+    // Все ответы API берутся только из HAR-файла; реальные запросы на сервер
+    // не уходят (routeFromHAR по умолчанию использует notFound: 'abort').
+    await page.routeFromHAR('./tests/mock.har', { url: '**/api/**' });
     await page.goto('/');
     await expect(page.getByText(BUN_NAME)).toBeVisible();
   });
@@ -80,7 +58,7 @@ test.describe('Конструктор бургера', () => {
     page,
     context
   }) => {
-    // Подставляем моковые токены авторизации.
+    // Подставляем моковые токены авторизации (ответы сервера — из HAR-файла).
     await context.addCookies([
       {
         name: 'accessToken',
@@ -93,15 +71,8 @@ test.describe('Конструктор бургера', () => {
       window.localStorage.setItem('refreshToken', 'test-refresh-token')
     );
 
-    // Моки ответов на запрос данных пользователя и создание заказа.
-    await page.route('**/api/auth/user', (route) =>
-      route.fulfill({ json: mockUser })
-    );
-    await page.route('**/api/orders', (route) =>
-      route.fulfill({ json: mockOrder })
-    );
-
-    // Перезагружаем страницу, чтобы приложение подхватило авторизацию.
+    // Перезагружаем страницу, чтобы приложение подхватило авторизацию
+    // (данные пользователя придут из HAR-файла).
     await page.goto('/');
     await expect(page.getByText(BUN_NAME)).toBeVisible();
 
