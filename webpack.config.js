@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const Dotenv = require('dotenv-webpack');
@@ -54,7 +55,10 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: './public/index.html'
     }),
-    new Dotenv()
+    new Dotenv({
+      // локально берём .env, на Vercel его нет — читаем .env.production
+      path: fs.existsSync('./.env') ? './.env' : './.env.production'
+    })
   ],
   resolve: {
     extensions: [
