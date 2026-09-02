@@ -95,7 +95,8 @@
     "format": "prettier ./src --write",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "build": "webpack --mode=production"
   },
   "eslintConfig": {
     "extends": [
